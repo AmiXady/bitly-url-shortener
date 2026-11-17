@@ -1,0 +1,32 @@
+# Локальная инфраструктура всего проекта.
+#
+#   docker compose up -d                                   — поднять всё
+#   docker compose up -d redis auth-postgres mailpit       — только то, что нужно auth-service
+#   docker compose down                                    — остановить
+#   docker compose down -v                                 — остановить и удалить данные
+#
+# Запускать из корня репозитория.
+# Письма: http://localhost:8025 (Mailpit)
+
+name: bitly-url-shortener
+
+include:
+  - auth-service/compose.yml
+  # - link-service/compose.yml
+  # - decode-service/compose.yml
+  # - analytics-service/compose.yml
+
+services:
+
+  # Общий Redis только для локальной разработки: ключи разделены префиксами (auth:, link:, decode:).
+  # В проде — отдельные инстансы: кэшу redirect'ов нужен allkeys-lru, а лимитеру auth вытеснение запрещено.
+  # Поэтому у каждого сервиса свой spring.data.redis.host — разделение будет правкой конфига, не кода.
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10

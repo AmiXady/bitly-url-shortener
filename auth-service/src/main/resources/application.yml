@@ -45,6 +45,9 @@ app:
   outbox:
     relay-delay: 2s
 
+  jwt:
+    private-key: file:/run/secrets/jwt-private.pem   # в docker/k8s — из секрета
+
 logging:
   level:
     kz.amixady.auth: DEBUG

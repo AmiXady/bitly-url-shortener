@@ -85,10 +85,6 @@ public class SmtpMailService implements MailService {
         message.setSubject(subject);
         message.setText(text);
 
-        try {
-            mailSender.send(message);
-        } catch (MailException e) {
-            log.error("Не удалось отправить письмо «{}» на {}", subject, to, e);
-        }
+        mailSender.send(message);
     }
 }
