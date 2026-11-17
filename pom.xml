@@ -20,6 +20,7 @@
         <module>link-service</module>
         <module>decode-service</module>
         <module>analytics-service</module>
+        <module>auth-service</module>
     </modules>
 
     <properties>

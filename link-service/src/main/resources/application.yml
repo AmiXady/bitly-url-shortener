@@ -4,3 +4,11 @@ server:
 spring:
   application:
     name: link-service
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  jpa:
+    open-in-view: false
+
+app:
+  own-host: sho.rt
