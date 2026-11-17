@@ -1,6 +1,6 @@
 package kz.amixady.auth.dto;
 
-import kz.amixady.auth.service.token.AccessToken;
+import kz.amixady.auth.token.AccessToken;
 
 public record TokenResponse(
         String accessToken,

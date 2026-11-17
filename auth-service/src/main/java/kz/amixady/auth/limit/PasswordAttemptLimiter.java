@@ -1,4 +1,4 @@
-package kz.amixady.auth.service.limit;
+package kz.amixady.auth.limit;
 
 import kz.amixady.auth.entity.EmailAddress;
 

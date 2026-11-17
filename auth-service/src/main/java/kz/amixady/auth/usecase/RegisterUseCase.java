@@ -1,14 +1,14 @@
 package kz.amixady.auth.usecase;
 
-
 import kz.amixady.auth.dto.RegisterRequest;
 import kz.amixady.auth.entity.Account;
 import kz.amixady.auth.entity.EmailAddress;
-import kz.amixady.auth.event.AlreadyRegisteredNotified;
+import kz.amixady.auth.entity.EmailConfirmation;
+import kz.amixady.auth.notification.Notifications;
 import kz.amixady.auth.repository.AccountRepository;
-import kz.amixady.auth.service.ConfirmationSender;
+import kz.amixady.auth.repository.EmailConfirmationRepository;
+import kz.amixady.auth.token.TokenGenerator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +24,9 @@ public class RegisterUseCase {
     private final AccountRepository accountRepository;
     private final Clock clock;
     private final PasswordEncoder encoder;
-    private final ApplicationEventPublisher events;
-    private final ConfirmationSender confirmationSender;
+    private final EmailConfirmationRepository confirmationRepository;
+    private final TokenGenerator tokenGenerator;
+    private final Notifications notifications;
 
 
     @Transactional
@@ -42,14 +43,21 @@ public class RegisterUseCase {
 
         Account account = accountRepository.save(
                 Account.register(email, encoder.encode(request.password()), now));
-        confirmationSender.send(account, now);
+        sendConfirmation(account, now);
     }
 
     private void handleExisting(Account account, Instant now) {
         if (account.isEmailVerified()) {
-            events.publishEvent(new AlreadyRegisteredNotified(account.getEmail()));
+            notifications.alreadyRegistered(account);
         } else {
-            confirmationSender.send(account, now);
+            sendConfirmation(account, now);
         }
+    }
+
+    private void sendConfirmation(Account account, Instant now) {
+        String token = tokenGenerator.generate();
+        confirmationRepository.save(
+                EmailConfirmation.issue(account.getId(), tokenGenerator.hash(token), now));
+        notifications.emailConfirmation(account, token);
     }
 }

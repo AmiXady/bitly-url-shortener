@@ -6,10 +6,10 @@ import kz.amixady.auth.entity.EmailAddress;
 import kz.amixady.auth.entity.EmailConfirmation;
 import kz.amixady.auth.exception.ConfirmationExpiredException;
 import kz.amixady.auth.exception.ConfirmationNotFoundException;
+import kz.amixady.auth.notification.Notifications;
 import kz.amixady.auth.repository.AccountRepository;
 import kz.amixady.auth.repository.EmailConfirmationRepository;
-import kz.amixady.auth.service.ConfirmationSender;
-import kz.amixady.auth.service.token.TokenGenerator;
+import kz.amixady.auth.token.TokenGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class ConfirmEmailUseCase {
     private final TokenGenerator tokenGenerator;
     private final EmailConfirmationRepository confirmationRepository;
     private final AccountRepository accountRepository;
-    private final ConfirmationSender confirmationSender;
+    private final Notifications notifications;
     private final Clock clock;
 
 
@@ -57,8 +57,8 @@ public class ConfirmEmailUseCase {
         EmailAddress email = new EmailAddress(rawEmail);
 
         findUnconfirmedAccount(email)
-                .filter(account -> wasSentRecently(account, now))
-                .ifPresent(account -> confirmationSender.send(account, now));
+                .filter(account -> !wasSentRecently(account, now))
+                .ifPresent(account -> sendConfirmation(account, now));
     }
 
     private EmailConfirmation getConfirmation(String token) {
@@ -74,5 +74,12 @@ public class ConfirmEmailUseCase {
     private boolean wasSentRecently(Account account, Instant now) {
         return confirmationRepository.existsByAccountIdAndCreatedAtAfter(
                 account.getId(), now.minus(RESEND_INTERVAL));
+    }
+
+    private void sendConfirmation(Account account, Instant now) {
+        String token = tokenGenerator.generate();
+        confirmationRepository.save(
+                EmailConfirmation.issue(account.getId(), tokenGenerator.hash(token), now));
+        notifications.emailConfirmation(account, token);
     }
 }

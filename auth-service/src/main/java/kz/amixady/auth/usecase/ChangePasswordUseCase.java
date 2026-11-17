@@ -3,14 +3,13 @@ package kz.amixady.auth.usecase;
 import kz.amixady.auth.dto.ChangePasswordRequest;
 import kz.amixady.auth.entity.Account;
 import kz.amixady.auth.entity.EmailAddress;
-import kz.amixady.auth.event.PasswordChanged;
 import kz.amixady.auth.exception.TooManyPasswordAttemptsException;
 import kz.amixady.auth.exception.WrongCurrentPasswordException;
+import kz.amixady.auth.notification.Notifications;
 import kz.amixady.auth.repository.AccountRepository;
 import kz.amixady.auth.repository.SessionRepository;
-import kz.amixady.auth.service.limit.PasswordAttemptLimiter;
+import kz.amixady.auth.limit.PasswordAttemptLimiter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,7 @@ public class ChangePasswordUseCase {
     private final SessionRepository sessionRepository;
     private final PasswordAttemptLimiter attemptLimiter;
     private final PasswordEncoder passwordEncoder;
-    private final ApplicationEventPublisher events;
+    private final Notifications notifications;
     private final Clock clock;
 
     @Transactional
@@ -42,7 +41,7 @@ public class ChangePasswordUseCase {
 
         account.changePassword(request.newPassword(), passwordEncoder);
         sessionRepository.revokeAllExcept(accountId, currentSessionId, now);
-        events.publishEvent(new PasswordChanged(account.getEmail()));
+        notifications.passwordChanged(account);
     }
 
     // 3a, 4a, BR-1, BR-3 — текущий пароль обязателен, неверные попытки ограничены

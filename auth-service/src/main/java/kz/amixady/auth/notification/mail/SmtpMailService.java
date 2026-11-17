@@ -1,4 +1,4 @@
-package kz.amixady.auth.service.mail;
+package kz.amixady.auth.notification.mail;
 
 import kz.amixady.auth.entity.EmailAddress;
 import lombok.extern.slf4j.Slf4j;

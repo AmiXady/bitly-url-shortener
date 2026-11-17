@@ -2,7 +2,7 @@ package kz.amixady.auth.controller;
 
 import jakarta.validation.Valid;
 import kz.amixady.auth.dto.*;
-import kz.amixady.auth.service.token.JwtClaims;
+import kz.amixady.auth.token.JwtClaims;
 import kz.amixady.auth.usecase.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;

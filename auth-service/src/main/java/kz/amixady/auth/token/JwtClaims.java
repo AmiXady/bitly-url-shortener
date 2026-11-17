@@ -1,4 +1,4 @@
-package kz.amixady.auth.service.token;
+package kz.amixady.auth.token;
 
 public final class JwtClaims {
 

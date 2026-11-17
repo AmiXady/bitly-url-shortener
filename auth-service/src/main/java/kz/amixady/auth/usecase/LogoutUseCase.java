@@ -1,7 +1,7 @@
 package kz.amixady.auth.usecase;
 
 import kz.amixady.auth.repository.SessionRepository;
-import kz.amixady.auth.service.token.TokenGenerator;
+import kz.amixady.auth.token.TokenGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
