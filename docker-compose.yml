@@ -1,32 +1,59 @@
-# Локальная инфраструктура всего проекта.
-#
-#   docker compose up -d                                   — поднять всё
-#   docker compose up -d redis auth-postgres mailpit       — только то, что нужно auth-service
-#   docker compose down                                    — остановить
-#   docker compose down -v                                 — остановить и удалить данные
-#
-# Запускать из корня репозитория.
-# Письма: http://localhost:8025 (Mailpit)
-
-name: bitly-url-shortener
-
-include:
-  - auth-service/compose.yml
-  # - link-service/compose.yml
-  # - decode-service/compose.yml
-  # - analytics-service/compose.yml
-
 services:
+  # База auth-service
+  auth-db:
+    image: postgres:17-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U auth -d auth" ]
+      interval: 5s
+      retries: 10
 
-  # Общий Redis только для локальной разработки: ключи разделены префиксами (auth:, link:, decode:).
-  # В проде — отдельные инстансы: кэшу redirect'ов нужен allkeys-lru, а лимитеру auth вытеснение запрещено.
-  # Поэтому у каждого сервиса свой spring.data.redis.host — разделение будет правкой конфига, не кода.
+  # База link-service
+  link-db:
+    image: postgres:17-alpine
+    container_name: link-db
+    environment:
+      POSTGRES_DB: link
+      POSTGRES_USER: link
+      POSTGRES_PASSWORD: link
+    ports:
+      - "5434:5432"
+    volumes:
+      - link-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U link -d link" ]
+      interval: 5s
+      retries: 10
+
+  # Redis для счётчиков: лимиты паролей, квоты ссылок.
+  # noeviction — при нехватке памяти не выкидывать ключи, а выдавать ошибку.
   redis:
     image: redis:7-alpine
+    container_name: redis
+    command: [ "redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction" ]
     ports:
       - "6379:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
-      timeout: 3s
       retries: 10
+
+  # Ловит письма. Веб-интерфейс: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # веб-интерфейс
+
+volumes:
+  auth-db-data:
+  link-db-data:
