@@ -5,11 +5,12 @@ import kz.amixady.auth.entity.Account;
 import kz.amixady.auth.entity.EmailAddress;
 import kz.amixady.auth.exception.TooManyPasswordAttemptsException;
 import kz.amixady.auth.exception.WrongCurrentPasswordException;
+import kz.amixady.auth.limit.PasswordAttemptLimiter;
 import kz.amixady.auth.notification.Notifications;
 import kz.amixady.auth.repository.AccountRepository;
 import kz.amixady.auth.repository.SessionRepository;
-import kz.amixady.auth.limit.PasswordAttemptLimiter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.UUID;
 /**
  * UC-05 Сменить пароль — 00-docs/02-use-cases/uc/uc-05.md
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ChangePasswordUseCase {
@@ -42,6 +44,8 @@ public class ChangePasswordUseCase {
         account.changePassword(request.newPassword(), passwordEncoder);
         sessionRepository.revokeAllExcept(accountId, currentSessionId, now);
         notifications.passwordChanged(account);
+
+        log.info("Password changed: accountId={}, keptSessionId={}", accountId, currentSessionId);
     }
 
     // 3a, 4a, BR-1, BR-3 — текущий пароль обязателен, неверные попытки ограничены
@@ -49,6 +53,9 @@ public class ChangePasswordUseCase {
         EmailAddress email = account.getEmail();
 
         attemptLimiter.retryAfter(email).ifPresent(wait -> {
+            // с действующим токеном подбирают пароль — возможно, токен украден
+            log.warn("Password change blocked by attempt limit: accountId={}, retryAfter={}",
+                    account.getId(), wait);
             throw new TooManyPasswordAttemptsException(wait);
         });
 

@@ -27,6 +27,10 @@ spring:
   mail:
     host: localhost
     port: 1025
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
 
   jackson:
     deserialization:
@@ -46,7 +50,11 @@ app:
     relay-delay: 2s
 
   jwt:
-    private-key: file:/run/secrets/jwt-private.pem   # в docker/k8s — из секрета
+    issuer: sho.rt/auth
+    access-token-ttl: 15m
+    private-key: ${JWT_PRIVATE_KEY:file:./secrets/jwt-private.pem}
+    public-key: ${JWT_PUBLIC_KEY:file:./secrets/jwt-public.pem}
+    key-id: auth-1
 
 logging:
   level:

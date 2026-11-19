@@ -39,14 +39,14 @@ public class AuthController {
     // UC-02, А — подтвердить email по токену из письма
     @PostMapping("/confirm")
     public void confirm(@Valid @RequestBody ConfirmRequest request) {
-        confirmEmailUseCase.confirm(request.token());
+        confirmEmailUseCase.confirm(request);
     }
 
     // UC-02, Б — отправить письмо ещё раз; всегда 202 (BR-5)
     @PostMapping("/confirm/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void resendConfirmation(@Valid @RequestBody ResendRequest request) {
-        confirmEmailUseCase.resend(request.email());
+        confirmEmailUseCase.resend(request);
     }
 
     // UC-03, А — войти
@@ -58,14 +58,14 @@ public class AuthController {
     // UC-03, Б — продлить вход
     @PostMapping("/refresh")
     public TokenResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return loginUseCase.refresh(request.refreshToken());
+        return loginUseCase.refresh(request);
     }
 
     // UC-20 — выйти; повторный выход — тоже 204
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody RefreshTokenRequest request) {
-        logoutUseCase.execute(request.refreshToken());
+        logoutUseCase.execute(request);
     }
 
     // UC-04, А — запросить ссылку сброса; всегда 202 (BR-2)

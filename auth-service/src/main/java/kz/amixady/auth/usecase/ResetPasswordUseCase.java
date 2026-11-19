@@ -13,6 +13,7 @@ import kz.amixady.auth.repository.PasswordResetRepository;
 import kz.amixady.auth.repository.SessionRepository;
 import kz.amixady.auth.token.TokenGenerator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.time.Instant;
 /**
  * UC-04 Восстановить пароль — 00-docs/02-use-cases/uc/uc-04.md
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ResetPasswordUseCase {
@@ -61,6 +63,8 @@ public class ResetPasswordUseCase {
         account.confirmEmail();
         sessionRepository.revokeAll(account.getId(), now);
         notifications.passwordChanged(account);
+
+        log.info("Password reset: accountId={}", account.getId());
     }
 
     // 3a — ссылки нет; 4a — использована или истекла
@@ -84,5 +88,7 @@ public class ResetPasswordUseCase {
         String token = tokenGenerator.generate();
         resetRepository.save(PasswordReset.issue(account.getId(), tokenGenerator.hash(token), now));
         notifications.passwordReset(account, token);
+
+        log.info("Password reset link sent: accountId={}", account.getId());
     }
 }

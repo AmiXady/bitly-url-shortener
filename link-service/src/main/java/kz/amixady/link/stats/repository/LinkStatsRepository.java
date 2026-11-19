@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// SQL к таблицам link_stats_*; используется только StatsFacade
 @Repository
 @RequiredArgsConstructor
 public class LinkStatsRepository {
